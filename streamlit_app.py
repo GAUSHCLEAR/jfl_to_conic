@@ -3,7 +3,7 @@ from parse_JFL import parse_jfl_file,plot_jfl_segments_with_arrows
 from fit import fit_sag_with_multi_standard_surface,sag_of_standard_surface, show_fit_result
 import matplotlib.pyplot as plt
 
-st.markdown("# JFL interpreter")
+st.markdown("# JFL to Conic Arc")
 jfl_file=st.file_uploader("Upload JFL file",type=['jfl'])
 if jfl_file is not None:
     jfl_segments=parse_jfl_file(jfl_file,streamlit=True)
