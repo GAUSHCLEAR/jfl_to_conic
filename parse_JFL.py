@@ -1,14 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import re
 
 # Function to parse a line into coordinates
+# def parse_line_to_coords(line):
+#     try:
+#         parts = line.split()
+#         x = float(parts[1])
+#         z = float(parts[3])
+#         return (x, z)
+#     except (ValueError, IndexError):
+#         return None
+    
 def parse_line_to_coords(line):
-    try:
-        parts = line.split()
-        x = float(parts[1])
-        z = float(parts[3])
+    # Regular expression to match both formats of the coordinates
+    match = re.search(r'X\s*([\d.]+)\s*Z\s*([\d.]+)', line)
+    if match:
+        x = float(match.group(1))
+        z = float(match.group(2))
         return (x, z)
-    except (ValueError, IndexError):
+    else:
         return None
 
 def parse_jfl_file(file_path, streamlit=False):
