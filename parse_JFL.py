@@ -1,17 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import re
+import copy
 
-# Function to parse a line into coordinates
-# def parse_line_to_coords(line):
-#     try:
-#         parts = line.split()
-#         x = float(parts[1])
-#         z = float(parts[3])
-#         return (x, z)
-#     except (ValueError, IndexError):
-#         return None
-    
+
 def parse_line_to_coords(line):
     # Regular expression to match both formats of the coordinates
     match = re.search(r'X\s*([\d.]+)\s*Z\s*([\d.]+)', line)
@@ -103,3 +95,108 @@ def plot_jfl_segments_with_arrows(segments, n_arrows=10):
     plt.show()
 
     return plt 
+
+def translate_segment(segments, segment_name, x_min, x_max, delta_Z):
+    '''
+    Translate a specified segment along the Z-axis.
+
+    Args:
+    segments (dict): Dictionary of segments with coordinates.
+    segment_name (str): Name of the segment to edit.
+    x_min, x_max (float): Range of X coordinates to apply the translation.
+    delta_Z (float): Value to add to Z coordinate for translation.
+    '''
+    if segment_name not in segments:
+        print(f"Segment {segment_name} not found.")
+        return
+    segments_copy = copy.deepcopy(segments)
+
+    for i, (x, z) in enumerate(segments_copy[segment_name]):
+        if x_min <= x <= x_max:
+            segments_copy[segment_name][i] = (x, z + delta_Z)
+    print(f"Segment {segment_name} translated successfully.")
+    return segments_copy
+
+def replace_segment(segments, segment_name, x_min, x_max, new_Z):
+    '''
+    Replace the Z-coordinate of a specified segment without altering the original segments.
+
+    Args:
+    segments (dict): Dictionary of segments with coordinates.
+    segment_name (str): Name of the segment to edit.
+    x_min, x_max (float): Range of X coordinates to apply the replacement.
+    new_Z (list or numpy array): New values for Z coordinate for replacement.
+    '''
+    # Create a deep copy of the segments to avoid modifying the original
+    segments_copy = copy.deepcopy(segments)
+
+    if segment_name not in segments_copy:
+        print(f"Segment {segment_name} not found.")
+        return
+
+    # Ensure new_Z is iterable and has the right number of elements
+    if not hasattr(new_Z, '__iter__'):
+        print("new_Z must be a list or numpy array.")
+        return
+
+    segment = segments_copy[segment_name]
+    replace_indices = [i for i, (x, _) in enumerate(segment) if x_min <= x <= x_max]
+
+    if len(replace_indices) != len(new_Z):
+        print("Length of new_Z does not match the number of points in the segment to be replaced.")
+        return
+
+    for i, new_z in zip(replace_indices, new_Z):
+        segment[i] = (segment[i][0], new_z)
+
+    print(f"Segment {segment_name} replaced successfully.")
+    return segments_copy
+
+def find_x_in_range(segments, segment_name, x_min, x_max):
+    if segment_name not in segments:
+        print(f"Segment {segment_name} not found.")
+        return
+    else:
+        segment = segments[segment_name]
+
+    x = np.array(segment)[:, 0]
+    x_filtered = x[(x >= x_min) & (x <= x_max)]
+    return x_filtered
+
+def build_jfl_string(segments):
+    header="""MCG
+GSH003
+Jobnumber
+8/29/2023 2:34:15 PM
+1
+C:
+L1021
+L1021
+MY_OK
+OK1
+Chuck1
+1
+2
+FC
+AC
+"""
+    footer='Q'
+    content = header
+    for segment_name, coords in segments.items():
+        content += segment_name + '\n'
+        for x, z in coords:
+            content += f'X {x:012.9f} Z {z:012.9f}\n'
+    content += footer
+    return content
+
+def save_jfl_file(segments, file_path):
+    '''
+    Save the modified segments back into a JFL file in the specified format.
+    
+    Args:
+    segments (dict): Dictionary of segments with coordinates.
+    file_path (str): Path to save the modified JFL file.
+    '''
+    with open(file_path, 'w') as file:
+        file.write(build_jfl_string(segments))
+    print(f"File saved successfully to {file_path}")
