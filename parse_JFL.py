@@ -64,8 +64,28 @@ def plot_jfl_segments_generic(segments):
     # Showing the plot
     plt.show()
 
+def plot_zoom_jfl_segments(segments,segment_name,x_min,x_max):
+    fig=plt.figure()
+    segment_data=segments[segment_name]
+    index=np.where(np.logical_and(segment_data[:,0]>=x_min,segment_data[:,0]<=x_max))[0]
+    plt.plot(segment_data[index, 0], segment_data[index, 1], label=f'{segment_name} Segment')
+    plt.xlim(x_min,x_max)
+    # plt.ylim(-0.5,0.5)
+
+    # Adding labels and title
+    plt.xlabel('X Coordinate')
+    plt.ylabel('Z Coordinate (Inverted)')
+    plt.title(f'Segment zoom in {segment_name}')
+    plt.legend()
+    # Inverting the y-axis
+    plt.gca().invert_yaxis()
+    # Showing the plot
+    plt.show()
+    return fig 
+
+
 def plot_jfl_segments_with_arrows(segments, n_arrows=10):
-    plt.figure(figsize=(10, 6))
+    fig=plt.figure(figsize=(10, 6))
 
     colors = ['blue', 'green', 'red', 'purple', 'orange', 'pink', 'brown', 'gray', 'olive', 'cyan']
 
@@ -94,7 +114,7 @@ def plot_jfl_segments_with_arrows(segments, n_arrows=10):
 
     plt.show()
 
-    return plt 
+    return fig 
 
 def translate_segment(segments, segment_name, x_min, x_max, target_Z, head="max"):
     '''
