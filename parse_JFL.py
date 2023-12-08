@@ -96,7 +96,7 @@ def plot_jfl_segments_with_arrows(segments, n_arrows=10):
 
     return plt 
 
-def translate_segment(segments, segment_name, x_min, x_max, delta_Z):
+def translate_segment(segments, segment_name, x_min, x_max, target_Z):
     '''
     Translate a specified segment along the Z-axis.
 
@@ -104,16 +104,21 @@ def translate_segment(segments, segment_name, x_min, x_max, delta_Z):
     segments (dict): Dictionary of segments with coordinates.
     segment_name (str): Name of the segment to edit.
     x_min, x_max (float): Range of X coordinates to apply the translation.
-    delta_Z (float): Value to add to Z coordinate for translation.
+    target_Z (float): Target Z coordinate for translation.    
     '''
     if segment_name not in segments:
         print(f"Segment {segment_name} not found.")
         return
     segments_copy = copy.deepcopy(segments)
-
-    for i, (x, z) in enumerate(segments_copy[segment_name]):
-        if x_min <= x <= x_max:
-            segments_copy[segment_name][i] = (x, z + delta_Z)
+    segment=segments_copy[segment_name]
+    # index=np.where((segment[:,0]>=x_min)&(segment[:,0]<=x_max))[0][0]
+    index=np.where(np.logical_and(segment[:,0]>=x_min,segment[:,0]<=x_max))[0][-2]
+    delta_Z=target_Z-segment[index][1]
+    
+    print(f"delta_Z={delta_Z}")
+    for i, (x, z) in enumerate(segment):
+        if x_min < x <= x_max:
+            segment[i] = (x, z + delta_Z)
     print(f"Segment {segment_name} translated successfully.")
     return segments_copy
 
