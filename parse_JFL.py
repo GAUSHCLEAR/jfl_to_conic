@@ -96,7 +96,7 @@ def plot_jfl_segments_with_arrows(segments, n_arrows=10):
 
     return plt 
 
-def translate_segment(segments, segment_name, x_min, x_max, target_Z):
+def translate_segment(segments, segment_name, x_min, x_max, target_Z, head="max"):
     '''
     Translate a specified segment along the Z-axis.
 
@@ -111,14 +111,24 @@ def translate_segment(segments, segment_name, x_min, x_max, target_Z):
         return
     segments_copy = copy.deepcopy(segments)
     segment=segments_copy[segment_name]
-    # index=np.where((segment[:,0]>=x_min)&(segment[:,0]<=x_max))[0][0]
-    index=np.where(np.logical_and(segment[:,0]>=x_min,segment[:,0]<=x_max))[0][-2]
+    if head=="max":
+        index=np.where(np.logical_and(segment[:,0]>=x_min,segment[:,0]<=x_max))[0][-2]
+    elif head=="min":
+        index=np.where(np.logical_and(segment[:,0]>=x_min,segment[:,0]<=x_max))[0][0]
     delta_Z=target_Z-segment[index][1]
-    
-    print(f"delta_Z={delta_Z}")
+    # print(f"index={index}")
+    # print(f"delta_Z={delta_Z}")
+
+    change_point_count=0
     for i, (x, z) in enumerate(segment):
-        if x_min < x <= x_max:
-            segment[i] = (x, z + delta_Z)
+        if head=="max":
+            if x_min < x <= x_max:
+                segment[i] = (x, z + delta_Z)            
+                change_point_count+=1
+        elif head=="min":
+            if x_min <= x < x_max:
+                segment[i] = (x, z + delta_Z)            
+                change_point_count+=1
     print(f"Segment {segment_name} translated successfully.")
     return segments_copy
 
