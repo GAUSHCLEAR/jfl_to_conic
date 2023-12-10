@@ -85,7 +85,7 @@ def plot_zoom_jfl_segments(segments,segment_name,x_min,x_max):
 
 
 def plot_jfl_segments_with_arrows(segments, n_arrows=10):
-    fig=plt.figure(figsize=(10, 6))
+    fig=plt.figure()
 
     colors = ['blue', 'green', 'red', 'purple', 'orange', 'pink', 'brown', 'gray', 'olive', 'cyan']
 
