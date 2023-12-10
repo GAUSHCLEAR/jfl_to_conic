@@ -80,7 +80,7 @@ def plot_zoom_jfl_segments(segments,segment_name,x_min,x_max):
     # Inverting the y-axis
     plt.gca().invert_yaxis()
     # Showing the plot
-    plt.show()
+    # plt.show()
     return fig 
 
 
@@ -112,7 +112,7 @@ def plot_jfl_segments_with_arrows(segments, n_arrows=10):
     # Inverting the y-axis
     plt.gca().invert_yaxis()
 
-    plt.show()
+    # plt.show()
 
     return fig 
 
