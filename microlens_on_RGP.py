@@ -130,3 +130,70 @@ def build_JFL(segments,
                 base_lens_back_semi_diameter,whole_lens_semi_diameter,
                 base_lens_back_sag[0],head='min')
     return segments6
+
+def horizontal_line(r, y):
+    return np.full_like(r, y)
+
+
+def adjusted_quarter_circle(x, x0, y0, R):
+    """
+    定义从点(x0, y0)开始，以R为半径，向x正方向转1/4圆弧的函数。
+    当R > 0时，圆弧向上；当R < 0时，圆弧向下。
+    """
+    sqrt_term = R**2 - (x - x0)**2
+    sqrt_term = np.where(sqrt_term < 0, 0, sqrt_term)
+    return y0 - R + np.sign(R) * np.sqrt(sqrt_term)
+
+def ellipse_y_values(x, x_a, y_a, x_b, y_b):
+    x = np.asarray(x)
+    a = np.abs(x_b - x_a)
+    b = np.abs(y_a - y_b)
+
+    if a == 0 or b == 0:
+        raise ValueError("Invalid ellipse parameters.")
+
+    sqrt_term = 1 - ((x - x_a) ** 2) / a ** 2
+    sqrt_term = np.where(sqrt_term < 0, 0, sqrt_term)
+
+    y_part = np.sqrt(sqrt_term) * b
+    y1 = y_b + y_part
+    y2 = y_b - y_part
+
+    return y1, y2
+
+def y_continuous(x, f_list):
+    # 分段函数，由f_list中的函数组成，每个函数对应一个区间
+    # f_list中的每个元素是一个三元组，分别是函数、函数参数、函数作用区间
+    #     f_list = [
+    #     (f1, (1, 2), (0, 1)),      # 使用f1函数在0 <= x < 1
+    #     (f2, (1, -1, 1), (1, 2)),  # 使用f2函数在1 <= x < 2
+    #     (f3, (2,), (2, 4))         # 使用f3函数在2 <= x < 4
+    # ]
+
+    # 存储每个分段的y值
+    segments_y = []
+    
+    # 上一个分段的最后一个y值，用于计算偏移量
+    last_y = 0
+
+    for (func, args, x_range) in f_list:
+        # 计算当前分段的x值
+        segment_x = x[(x_range[0] <= x) & (x < x_range[1])]
+
+        # 计算当前分段的y值
+        segment_y = func(segment_x, *args)
+
+        # 如果不是第一个分段，计算偏移量并应用
+        if segments_y:
+            # 计算需要的偏移量使得当前分段的起始点与上一个分段的终点对齐
+            offset = last_y - segment_y[0]
+            segment_y += offset
+
+        # 更新上一个分段的最后一个y值
+        last_y = segment_y[-1] if len(segment_y) > 0 else last_y
+
+        # 将当前分段的y值添加到列表中
+        segments_y.append(segment_y)
+
+    # 将所有分段的y值合并成一个数组
+    return np.concatenate(segments_y)
