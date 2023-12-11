@@ -179,10 +179,8 @@ def y_continuous(x, f_list):
     for (func, args, x_range) in f_list:
         # 计算当前分段的x值
         segment_x = x[(x_range[0] <= x) & (x < x_range[1])]
-
         # 计算当前分段的y值
-        segment_y = func(segment_x, *args)
-
+        segment_y = np.array(func(segment_x, *args),dtype=np.float64)
         # 如果不是第一个分段，计算偏移量并应用
         if segments_y:
             # 计算需要的偏移量使得当前分段的起始点与上一个分段的终点对齐
@@ -194,6 +192,6 @@ def y_continuous(x, f_list):
 
         # 将当前分段的y值添加到列表中
         segments_y.append(segment_y)
-
+    segments_y.append([segment_y[-1]])
     # 将所有分段的y值合并成一个数组
     return np.concatenate(segments_y)
