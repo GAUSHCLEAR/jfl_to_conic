@@ -5,12 +5,14 @@ import copy
 
 
 def parse_line_to_coords(line):
-    # Regular expression to match both formats of the coordinates
-    match = re.search(r'X\s*([\d.]+)\s*Z\s*([\d.]+)', line)
+    # Regular expression to match the format of the coordinates (including the optional W coordinate)
+    match = re.search(r'X\s*([\d.]+)\s*Z\s*([\d.]+)(?:\s*W\s*([\d.-]+))?', line)
     if match:
         x = float(match.group(1))
         z = float(match.group(2))
-        return (x, z)
+        # Check if W coordinate is present
+        w = float(match.group(3)) if match.group(3) else None
+        return (x, z, w) if w is not None else (x, z)
     else:
         return None
 

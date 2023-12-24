@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sympy import symbols, Eq, solve, series, simplify
 
-def z(r,R,Q):
+def conic(r,R,Q):
     return (1/R)*r**2/(1+np.sqrt(1-(1+Q**2)*(1/R)**2*r**2))
 
 def odd_asphere(r, R, Q, alpha):
@@ -37,7 +37,7 @@ def axiconOddAsphereParams(axiconDiameter, axiconHeight, axiconRadius, maxOrder=
     valid_resultCzCy = [sol for sol in resultCzCy if sol[0] > 0][0]
     Cz_value, Cy_value = valid_resultCzCy
     
-    # Find the series expansion of z(r)
+    # Find the series expansion of conic(r)
     z_exp = solve(Eq((z - Cz)**2 + (r - Cy)**2, Cz**2 + Cy**2), z)[0]
     z_exp_sub = z_exp.subs({Cz: Cz_value, Cy: Cy_value})
     
@@ -64,7 +64,7 @@ def build_front_sag(segments,
     microlens_semi_diameter, base_lens_semi_diameter)
 
     microlens_sag=odd_asphere(microlens_x,0,0,axiconOddAsphereParams(microlens_semi_diameter*2, axicon_hight_in_um/1000, microlens_R,16))
-    base_lens_sag_tmp=z(base_lens_x,base_lens_R,base_lens_Q)
+    base_lens_sag_tmp=conic(base_lens_x,base_lens_R,base_lens_Q)
     delta_sag=microlens_sag[0]-base_lens_sag_tmp[-1]
     base_lens_sag=base_lens_sag_tmp+delta_sag
     return microlens_sag,base_lens_sag
@@ -77,7 +77,7 @@ def build_back_sag(segments,
         ):
     base_lens_back_x=base_lens_back_x=find_x_in_range(segments,'B', 
     0, base_lens_back_semi_diameter)
-    base_lens_back_sag=z(base_lens_back_x,base_lens_back_R,base_lens_back_Q)+center_thickness
+    base_lens_back_sag=conic(base_lens_back_x,base_lens_back_R,base_lens_back_Q)+center_thickness
     return base_lens_back_sag
 
 def build_JFL(segments,
@@ -162,36 +162,30 @@ def ellipse_y_values(x, x_a, y_a, x_b, y_b):
     return y1, y2
 
 def y_continuous(x, f_list):
-    # 分段函数，由f_list中的函数组成，每个函数对应一个区间
-    # f_list中的每个元素是一个三元组，分别是函数、函数参数、函数作用区间
-    #     f_list = [
-    #     (f1, (1, 2), (0, 1)),      # 使用f1函数在0 <= x < 1
-    #     (f2, (1, -1, 1), (1, 2)),  # 使用f2函数在1 <= x < 2
-    #     (f3, (2,), (2, 4))         # 使用f3函数在2 <= x < 4
-    # ]
+    # 预先初始化一个与x同长度的数组
+    y_continuous = np.empty_like(x)
 
-    # 存储每个分段的y值
-    segments_y = []
-    
     # 上一个分段的最后一个y值，用于计算偏移量
     last_y = 0
 
     for (func, args, x_range) in f_list:
-        # 计算当前分段的x值
-        segment_x = x[(x_range[0] <= x) & (x < x_range[1])]
+        # 计算当前分段的x值的掩码
+        mask = (x_range[0] <= x) & (x < x_range[1])
+        segment_x = x[mask]
+
         # 计算当前分段的y值
-        segment_y = np.array(func(segment_x, *args),dtype=np.float64)
+        segment_y = np.array(func(segment_x, *args),dtype=np.float32)
+
         # 如果不是第一个分段，计算偏移量并应用
-        if segments_y:
-            # 计算需要的偏移量使得当前分段的起始点与上一个分段的终点对齐
+        if x_range[0] > 0:
             offset = last_y - segment_y[0]
             segment_y += offset
 
-        # 更新上一个分段的最后一个y值
-        last_y = segment_y[-1] if len(segment_y) > 0 else last_y
+        # 将当前分段的y值填充到y_continuous中
+        y_continuous[mask] = segment_y
 
-        # 将当前分段的y值添加到列表中
-        segments_y.append(segment_y)
-    segments_y.append([segment_y[-1]])
-    # 将所有分段的y值合并成一个数组
-    return np.concatenate(segments_y)
+        # 更新上一个分段的最后一个y值
+        if len(segment_y) > 0:
+            last_y = segment_y[-1]
+
+    return y_continuous
