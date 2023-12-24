@@ -3,7 +3,18 @@ import matplotlib.pyplot as plt
 import re
 import copy
 
-
+def parse_line_to_coords_refactored(line):
+    # Regular expression to match the format of the coordinates (including the optional W coordinate)
+    match = re.search(r'X\s*([\d.]+)\s*Z\s*([\d.]+)(?:\s*W\s*([\d.-]+))?', line)
+    if match:
+        x = float(match.group(1))
+        z = float(match.group(2))
+        # Check if W coordinate is present
+        w = float(match.group(3)) if match.group(3) else None
+        return (x, z, w) if w is not None else (x, z)
+    else:
+        return None
+    
 def parse_line_to_coords(line):
     # Regular expression to match the format of the coordinates (including the optional W coordinate)
     match = re.search(r'X\s*([\d.]+)\s*Z\s*([\d.]+)(?:\s*W\s*([\d.-]+))?', line)
@@ -15,6 +26,41 @@ def parse_line_to_coords(line):
         return (x, z, w) if w is not None else (x, z)
     else:
         return None
+    
+def parse_jfl_file_refactored(file_path):
+    with open(file_path, 'r') as file:
+        file_contents = file.readlines()
+
+    segments = {}
+    current_segment = None
+    is_three_coordinate_data = False
+
+    for line in file_contents:
+        line = line.strip()
+        if line.startswith("*"):  # Check for the three-coordinate data marker
+            is_three_coordinate_data = True
+        elif line.isalpha():  # New segment
+            current_segment = line
+            segments[current_segment + "_XZ"] = []  # Initialize two-coordinate data list
+            segments[current_segment + "_XZW"] = []  # Initialize three-coordinate data list
+            is_three_coordinate_data = False
+        else:
+            coords = parse_line_to_coords_refactored(line)
+            if coords and current_segment:
+                if is_three_coordinate_data and len(coords) == 3:  # Three-coordinate data
+                    segments[current_segment + "_XZW"].append(coords)
+                elif len(coords) == 2:  # Two-coordinate data
+                    segments[current_segment + "_XZ"].append(coords)
+
+    # Convert lists to numpy arrays and remove empty segments
+    for segment in list(segments.keys()):
+        if len(segments[segment]) > 0:
+            segments[segment] = np.array(segments[segment])
+        else:
+            del segments[segment]
+
+    return segments
+
 
 def parse_jfl_file(file_path, streamlit=False):
     if streamlit:
