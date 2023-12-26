@@ -301,7 +301,7 @@ AC
         elif segment_name.endswith("_XZW"):
             # Three-coordinate data (XZW)
             content += three_coord_marker + '\n'
-            content += segment_name[:-4] + '\n'  # Remove '_XZW' from segment name
+            # content += segment_name[:-4] + '\n'  # Remove '_XZW' from segment name
             for x, z, w in coords:
                 content += f'X {x:012.9f} Z {z:012.9f} W {w:012.9f}\n'
 
