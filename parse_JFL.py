@@ -246,8 +246,34 @@ def find_x_in_range(segments, segment_name, x_min, x_max):
     x_filtered = x[(x >= x_min) & (x <= x_max)]
     return x_filtered
 
-def build_jfl_string(segments):
-    header="""MCG
+# def build_jfl_string(segments):
+#     header="""MCG
+# GSH003
+# Jobnumber
+# 8/29/2023 2:34:15 PM
+# 1
+# C:
+# L1021
+# L1021
+# MY_OK
+# OK1
+# Chuck1
+# 1
+# 2
+# FC
+# AC
+# """
+#     footer='Q'
+#     content = header
+#     for segment_name, coords in segments.items():
+#         content += segment_name + '\n'
+#         for x, z in coords:
+#             content += f'X {x:012.9f} Z {z:012.9f}\n'
+#     content += footer
+#     return content
+
+def build_jfl_string(segments, three_coord_marker="*S015A000"):
+    header = """MCG
 GSH003
 Jobnumber
 8/29/2023 2:34:15 PM
@@ -263,16 +289,27 @@ Chuck1
 FC
 AC
 """
-    footer='Q'
+    footer = 'Q'
     content = header
     for segment_name, coords in segments.items():
-        content += segment_name + '\n'
-        for x, z in coords:
-            content += f'X {x:012.9f} Z {z:012.9f}\n'
+        # Determine if the segment is for two-coordinate or three-coordinate data
+        if segment_name.endswith("_XZ"):
+            # Two-coordinate data (XZ)
+            content += segment_name[:-3] + '\n'  # Remove '_XZ' from segment name
+            for x, z in coords:
+                content += f'X {x:012.9f} Z {z:012.9f}\n'
+        elif segment_name.endswith("_XZW"):
+            # Three-coordinate data (XZW)
+            content += three_coord_marker + '\n'
+            content += segment_name[:-4] + '\n'  # Remove '_XZW' from segment name
+            for x, z, w in coords:
+                content += f'X {x:012.9f} Z {z:012.9f} W {w:012.9f}\n'
+
     content += footer
     return content
 
-def save_jfl_file(segments, file_path):
+
+def save_jfl_file(segments, file_path,three_coord_marker="*S015A000"):
     '''
     Save the modified segments back into a JFL file in the specified format.
     
@@ -281,5 +318,5 @@ def save_jfl_file(segments, file_path):
     file_path (str): Path to save the modified JFL file.
     '''
     with open(file_path, 'w') as file:
-        file.write(build_jfl_string(segments))
+        file.write(build_jfl_string(segments,three_coord_marker=three_coord_marker))
     print(f"File saved successfully to {file_path}")
