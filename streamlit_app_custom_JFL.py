@@ -14,10 +14,16 @@ def odd_asphere_input(c,id):
     Q=col2.number_input("",value=0.0,key=f"odd_asphere_Q_{id}")
     semi_diameter=col3.number_input("",value=0.0,key=f"odd_asphere_semi_diameter_{id}")
     N=c.number_input("N",value=3,key=f"odd_asphere_N_{id}")
-    col=c.columns(N)
+    if N<=5:
+        col=c.columns(N)
+    else:
+        col=c.columns(5)
+
     a_list=[]
     for i in range(N):
-        a=col[i].number_input("",value=0.0,key=f"odd_asphere_a_{id}_{i}")
+        # i % 5
+        col_id= i % 5 
+        a=col[col_id].number_input(f"{i+1}",value=0.0,key=f"odd_asphere_a_{id}_{i}")
         a_list.append(a)
 
     return R,Q,semi_diameter,N,a_list
